@@ -1,7 +1,7 @@
 package getthemes
 
 type output struct {
-	Themes []theme `json:"tags"`
+	Themes []theme `json:"themes"`
 }
 
 type theme struct {
