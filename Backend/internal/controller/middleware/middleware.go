@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"net/http"
 	"runtime/debug"
-	"strings"
 
 	"github.com/PlopyBlopy/notebot/config"
 	"github.com/rs/zerolog/log"
@@ -70,34 +69,6 @@ func (m *MiddlewareBuilder) PanicMiddleware() *MiddlewareBuilder {
 					w.WriteHeader(http.StatusInternalServerError)
 				}
 			}()
-
-			next.ServeHTTP(w, r)
-		})
-	}
-	m.middlewares = append(m.middlewares, middleware)
-	return m
-}
-
-// CORS
-func (m *MiddlewareBuilder) CorsMiddleware() *MiddlewareBuilder {
-	middleware := func(next http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			allowedHost := []string{"localhost", "127.0.0.1"}
-			requestHost := r.RemoteAddr
-
-			allowed := false
-			for _, a := range allowedHost {
-				if strings.HasPrefix(requestHost, a) {
-					allowed = true
-					break
-				}
-			}
-
-			if !allowed {
-				w.WriteHeader(http.StatusBadRequest)
-				w.Write([]byte("CORS error"))
-				return
-			}
 
 			next.ServeHTTP(w, r)
 		})
