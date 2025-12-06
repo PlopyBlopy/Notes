@@ -14,5 +14,5 @@ export const Tag = ({ tag }: Props) => {
 
   const { tagColors } = useStore();
 
-  return <MarkedWord text={tag.title} color={"var(--tag-text-color)"} backgroundColor={tagColors.get(tag.colorId)?.variable} />;
+  return <MarkedWord text={tag.title} color={"var(--text-color-primary)"} backgroundColor={tagColors.get(tag.colorId)?.variable} />;
 };

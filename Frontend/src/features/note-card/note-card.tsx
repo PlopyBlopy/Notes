@@ -71,7 +71,7 @@ export const NoteCard = ({ card }: PropNoteContainer) => {
           <Checkbox />
           <div className={styles.title}>{card.note.title}</div>
         </div>
-        <MarkedWord text={themes.get(card.themeId)?.title} color="var(--text-color-primary)" backgroundColor="var(--color-light)" />
+        <MarkedWord text={themes.get(card.themeId)?.title} color={"var(--text-color-primary)"} backgroundColor={"var(--text-color-light)"} />
       </div>
 
       <div className={styles.middle}>

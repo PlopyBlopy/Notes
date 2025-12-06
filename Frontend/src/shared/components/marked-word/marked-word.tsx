@@ -6,10 +6,10 @@ export interface Style {
 }
 
 interface Props extends Style {
-  text: string | undefined;
+  text?: string;
 }
 
-export const MarkedWord = ({ text, color, backgroundColor }: Props) => {
+export const MarkedWord = ({ text = "MarkedWord", color, backgroundColor }: Props) => {
   const style: React.CSSProperties = {
     color: color,
     backgroundColor: backgroundColor,

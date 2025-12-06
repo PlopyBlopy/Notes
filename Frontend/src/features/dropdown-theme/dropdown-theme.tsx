@@ -1,10 +1,10 @@
 import { useState } from "react";
 import styles from "./dropdown-theme.module.css";
-import type { Theme } from "@/shared/api";
+import type { ThemeInfo } from "@/shared/api";
 
 type Props = {
-  options: Theme[];
-  value: Theme;
+  options: ThemeInfo[];
+  value: ThemeInfo;
   onChange: (value: number) => void;
   placeholder?: string;
 };
@@ -26,7 +26,7 @@ export const DropdownTheme = ({ options, value, onChange, placeholder = "Выб�
   return (
     <div className={styles.container}>
       <div className={styles.header} onClick={() => setIsOpen(!isOpen)}>
-        <span className={value ? styles.selected : styles.placeholder}>{value.title || placeholder}</span>
+        <span className={value ? styles.selected : styles.placeholder}>{value?.title || placeholder}</span>
         <div className={styles.controls}>
           {value && (
             <span className={styles.clear} onClick={handleClear}>
@@ -45,7 +45,7 @@ export const DropdownTheme = ({ options, value, onChange, placeholder = "Выб�
               className={`${styles.item} ${value.id === option.id ? styles.itemSelected : ""}`}
               onClick={() => handleSelect(option.id)}
             >
-              {option.title}
+              {option?.title}
             </div>
           ))}
         </div>
