@@ -1,12 +1,14 @@
 package note
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
+	"sync"
 )
 
 type Index struct {
@@ -16,7 +18,7 @@ type Index struct {
 	OffSize          []OffSize
 	NoteIndexes      []NoteIndex
 	CompletedNotes   []Note
-	UnCompletedNotes []Note
+	UncompletedNotes []Note
 }
 
 type OffSize struct {
@@ -34,7 +36,7 @@ type IIndexManager interface {
 	AddNote(note Note) error
 	AddNoteIndex(noteIndex NoteIndex) error
 
-	GetCompletedNotesFilteredNoteIds(noteIds ...int) ([]Note, error)
+	GetNotes(completed bool, cursor, limit int, noteIds ...int) ([]Note, int, error)
 	GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteIndex, error)
 
 	GetFilteredTitleNoteIds(search string) ([]int, error)
@@ -51,7 +53,7 @@ func NewIndexManager(mm IMetadataManager) (*IndexManager, error) {
 			NoteIndexes:      []NoteIndex{},
 			OffSize:          []OffSize{},
 			CompletedNotes:   []Note{},
-			UnCompletedNotes: []Note{},
+			UncompletedNotes: []Note{},
 		},
 		metadataManager: mm,
 	}
@@ -59,51 +61,65 @@ func NewIndexManager(mm IMetadataManager) (*IndexManager, error) {
 	return im, nil
 }
 
+// need context
 func (im *IndexManager) Scan() error {
-
-	im.scanNoteIndex()
-
-	scans := []func() error{
-		im.scanNote,
-		im.scanOffSize,
-		im.scanNoteTheme,
-		im.scanNoteTag,
+	stages := [][]func() error{
+		{im.scanNoteIndex},
+		{im.scanNote, im.scanOffSize, im.scanNoteTheme, im.scanNoteTag},
+		{im.scanNoteTitle},
 	}
 
-	im.scanNoteTitle()
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var scanError error
+	var once sync.Once
+	var wg sync.WaitGroup
 
-	doneChan := make(chan bool, len(scans))
-	errChan := make(chan error, len(scans))
-
-	for _, scan := range scans {
-		go func(f func() error) {
-			if err := f(); err != nil {
-				errChan <- err
-			}
-			doneChan <- true
-		}(scan)
-	}
-
-	for i := 0; i < len(scans); i++ {
-		select {
-		case <-doneChan:
-		case err := <-errChan:
-			return err
-		case <-time.After(5 * time.Second):
-			return errors.New("scan time end")
+	for _, scanStages := range stages {
+		if ctx.Err() != nil {
+			break
 		}
+
+		for _, scan := range scanStages {
+			if ctx.Err() != nil {
+				break
+			}
+
+			wg.Add(1)
+			go func(f func() error) {
+				defer wg.Done()
+
+				if err := f(); err != nil {
+					once.Do(func() {
+						scanError = err
+						cancel()
+					})
+				}
+			}(scan)
+		}
+
+		wg.Wait()
+	}
+
+	if scanError != nil {
+		return scanError
 	}
 
 	return nil
 }
 
-func (im *IndexManager) scanNoteIndex() {
+func (im *IndexManager) scanNoteIndex() error {
 	p := filepath.Join(im.metadataManager.BasePath(), im.metadataManager.IndexPath(), im.metadataManager.NoteIndexFileName())
 	b, _ := os.ReadFile(p)
 	ni := []NoteIndex{}
-	json.Unmarshal(b, &ni)
+	err := json.Unmarshal(b, &ni)
+	if err != nil {
+
+	}
 
 	im.i.NoteIndexes = ni
+
+	return nil
 }
 
 func (im *IndexManager) scanNote() error {
@@ -118,11 +134,10 @@ func (im *IndexManager) scanNote() error {
 			return errors.New("failed scanNote: NoteIndexes.Id not equal note.Id")
 		}
 
-		switch im.i.NoteIndexes[i].Completed {
-		case false:
-			im.i.UnCompletedNotes = append(im.i.UnCompletedNotes, n[i])
-		case true:
+		if im.i.NoteIndexes[i].Completed {
 			im.i.CompletedNotes = append(im.i.CompletedNotes, n[i])
+		} else {
+			im.i.UncompletedNotes = append(im.i.UncompletedNotes, n[i])
 		}
 	}
 	return nil
@@ -144,14 +159,20 @@ func (im *IndexManager) scanOffSize() error {
 	return nil
 }
 
-// scan only by completed notes
 func (im *IndexManager) scanNoteTitle() error {
-	noteTitles := make(map[string]int, len(im.i.CompletedNotes))
+	noteTitles := make(map[string]int, len(im.i.CompletedNotes)+len(im.i.UncompletedNotes))
 	completedNotes := im.i.CompletedNotes
 
-	for _, v := range completedNotes {
-		key := strings.ToLower(v.Title)
-		noteTitles[key] = v.Id
+	for _, n := range completedNotes {
+		key := strings.ToLower(n.Title)
+		noteTitles[key] = n.Id
+	}
+
+	uncompletedNotes := im.i.UncompletedNotes
+
+	for _, n := range uncompletedNotes {
+		key := strings.ToLower(n.Title)
+		noteTitles[key] = n.Id
 	}
 
 	im.i.NoteTitles = noteTitles
@@ -159,17 +180,21 @@ func (im *IndexManager) scanNoteTitle() error {
 	return nil
 }
 func (im *IndexManager) scanNoteTheme() error {
-	ThemeIds, err := im.metadataManager.GetThemeIds()
+	themeIds, err := im.metadataManager.GetThemeIds()
 	if err != nil {
 
 	}
 
-	themes := make(map[int][]int, len(ThemeIds))
+	themes := make(map[int][]int, len(themeIds))
 	noteIndexes := im.i.NoteIndexes
 
-	for _, themeId := range ThemeIds {
+	for i := 0; i < len(themeIds); i++ {
 		for _, noteIndex := range noteIndexes {
-			themes[themeId] = append(themes[themeId], noteIndex.Id)
+			if noteIndex.ThemeId == themeIds[i] {
+				themes[themeIds[i]] = append(themes[themeIds[i]], noteIndex.Id)
+			} else if themeIds[i] == 0 {
+				themes[themeIds[i]] = append(themes[themeIds[i]], noteIndex.Id)
+			}
 		}
 	}
 
@@ -188,7 +213,12 @@ func (im *IndexManager) scanNoteTag() error {
 
 	for _, tagId := range TagsIds {
 		for _, noteIndex := range noteIndexes {
-			tags[tagId] = append(tags[tagId], noteIndex.Id)
+			for _, noteTagId := range noteIndex.TagIds {
+				if noteTagId == tagId {
+					tags[tagId] = append(tags[tagId], noteIndex.Id)
+					break
+				}
+			}
 		}
 	}
 
@@ -198,7 +228,10 @@ func (im *IndexManager) scanNoteTag() error {
 }
 
 func (im *IndexManager) AddNote(note Note) error {
-	im.i.CompletedNotes = append(im.i.CompletedNotes, note)
+	im.i.UncompletedNotes = append(im.i.UncompletedNotes, note)
+
+	title := strings.ToLower(note.Title)
+	im.i.NoteTitles[title] = note.Id
 
 	return nil
 }
@@ -211,58 +244,52 @@ func (im *IndexManager) AddNoteIndex(noteIndex NoteIndex) error {
 		Size: noteIndex.Size,
 	})
 
+	if noteIndex.ThemeId != 0 {
+		im.i.Themes[0] = append(im.i.Themes[0], noteIndex.Id)
+	}
+	im.i.Themes[noteIndex.ThemeId] = append(im.i.Themes[noteIndex.ThemeId], noteIndex.Id)
+
+	for _, tagId := range noteIndex.TagIds {
+		im.i.Tags[tagId] = append(im.i.Tags[tagId], noteIndex.Id)
+	}
+
 	return nil
 }
 
-// return cursor, error
-func (im *IndexManager) GetCompletedNotes(cursor, limit int) ([]Note, int, error) {
-	start, end := im.getCursorIndex(cursor, limit, len(im.i.CompletedNotes))
-	if start == -1 || end == -1 {
-		return nil, -1, nil
-	}
-	n := im.i.CompletedNotes[start:end]
-
-	return n, end, nil
-}
-
-// GetCompletedNoteIds(cursor, limit int) ([]int, int, error)
-func (im *IndexManager) GetCompletedNotesFilteredNoteIds(noteIds ...int) ([]Note, error) {
-	notes := make([]Note, 0, len(noteIds)) // problem
-	completedNotes := im.i.CompletedNotes
-
-	for _, n := range completedNotes {
-		for _, id := range noteIds {
-			if n.Id == id {
-				notes = append(notes, n)
-			}
-		}
+func (im *IndexManager) GetNotes(completed bool, cursor, limit int, noteIds ...int) ([]Note, int, error) {
+	cap := limit
+	if len(noteIds) < limit {
+		cap = len(noteIds)
 	}
 
-	return notes, nil
-}
+	notes := make([]Note, 0, cap)
+	var indexNotes []Note
 
-func (im *IndexManager) GetUncompletedNotes(cursor, limit int) ([]Note, int, error) {
-	start, end := im.getCursorIndex(cursor, limit, len(im.i.UnCompletedNotes))
-	if start == -1 || end == -1 {
-		return nil, -1, nil
-	}
-	n := im.i.UnCompletedNotes[start:end]
-
-	return n, end, nil
-}
-
-func (im *IndexManager) getCursorIndex(cursor, limit, notesLim int) (start, end int) {
-	cl := cursor + 1 + limit
-
-	if cl > notesLim {
-		if notesLim > cursor {
-			return cursor, notesLim
-		}
+	if completed {
+		indexNotes = im.i.CompletedNotes
 	} else {
-		return cursor, cursor + limit
+		indexNotes = im.i.UncompletedNotes
 	}
 
-	return -1, -1
+	if cursor >= len(indexNotes) {
+		return nil, cursor, fmt.Errorf("cursor exit of range")
+	}
+
+	noteIdIndex := 0
+
+	for i := cursor; i < len(indexNotes); i++ {
+		if len(notes) == cap {
+			break
+		}
+
+		if noteIdIndex < len(noteIds) && indexNotes[i].Id == noteIds[noteIdIndex] {
+			notes = append(notes, indexNotes[i])
+			cursor = i + 1
+			noteIdIndex++
+		}
+	}
+
+	return notes, cursor, nil
 }
 
 func (im *IndexManager) GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteIndex, error) {
@@ -341,6 +368,7 @@ func (im *IndexManager) GetFilteredThemeNoteIds(themeId int) ([]int, error) {
 	for k, v := range themes {
 		if k == themeId {
 			ids = append(ids, v...)
+			break
 		}
 	}
 
