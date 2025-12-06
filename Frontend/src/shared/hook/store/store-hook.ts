@@ -6,10 +6,11 @@ export function useStore() {
   const [cards, setCards] = useState<Card[]>([]);
   const [tags, setTags] = useState<Map<number, TagInfo>>(new Map());
   const [tagArr, setTagArr] = useState<TagInfo[]>([]);
+  const [themes, setThemes] = useState<Map<number, ThemeInfo>>(new Map());
+  const [themeArr, setThemeArr] = useState<ThemeInfo[]>([]);
   const [tagColors, setTagColors] = useState<Map<number, ColorInfo>>(new Map());
   const [cardColors, setCardColors] = useState<Map<number, ColorInfo>>(new Map());
   const [cardColorArr, setCardColorArr] = useState<ColorInfo[]>([]);
-  const [themes, setThemes] = useState<ThemeInfo[]>([]);
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -21,20 +22,22 @@ export function useStore() {
       setCards(storeInstance.GetCards());
       setTags(storeInstance.GetTags());
       setTagArr(storeInstance.GetTagArr());
+      setThemes(storeInstance.GetThemes());
+      setThemeArr(storeInstance.GetThemeArr());
       setTagColors(storeInstance.GetTagColors());
       setCardColors(storeInstance.GetCardColors());
       setCardColorArr(storeInstance.GetCardColorArr());
-      setThemes(storeInstance.GetThemes());
 
       unsubscribe = storeInstance.Subscribe(() => {
         if (!mounted) return;
         setCards(storeInstance.GetCards());
         setTags(storeInstance.GetTags());
         setTagArr(storeInstance.GetTagArr());
+        setThemes(storeInstance.GetThemes());
+        setThemeArr(storeInstance.GetThemeArr());
         setTagColors(storeInstance.GetTagColors());
         setCardColors(storeInstance.GetCardColors());
         setCardColorArr(storeInstance.GetCardColorArr());
-        setThemes(storeInstance.GetThemes());
       });
     });
 
@@ -54,5 +57,5 @@ export function useStore() {
     },
   };
 
-  return { cards, tags, tagArr, tagColors, cardColors, cardColorArr, themes, ...actions };
+  return { cards, tags, tagArr, tagColors, cardColors, cardColorArr, themes, themeArr, ...actions };
 }

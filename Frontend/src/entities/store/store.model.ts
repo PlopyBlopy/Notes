@@ -16,10 +16,11 @@ class Store {
   private _cards: Card[] = [];
   private _tags: Map<number, TagInfo> = new Map();
   private _tagArr: TagInfo[] = [];
+  private _themes: Map<number, ThemeInfo> = new Map();
+  private _themesArr: ThemeInfo[] = [];
   private _tagColors: Map<number, ColorInfo> = new Map();
   private _cardColors: Map<number, ColorInfo> = new Map();
   private _cardColorArr: ColorInfo[] = [];
-  private _themes: ThemeInfo[] = [];
 
   private listeners = new Set<() => void>();
 
@@ -73,7 +74,12 @@ class Store {
 
   private initThemes = async () => {
     const themes: ThemeInfo[] = await getThemes();
-    this._themes = themes;
+
+    themes.forEach((theme) => {
+      this._themes.set(theme.id, theme);
+    });
+
+    this._themesArr = themes;
   };
 
   public GetCards(): Card[] {
@@ -98,9 +104,12 @@ class Store {
   public GetCardColorArr(): ColorInfo[] {
     return this._cardColorArr;
   }
-
-  public GetThemes(): ThemeInfo[] {
+  public GetThemes(): Map<number, ThemeInfo> {
     return this._themes;
+  }
+
+  public GetThemeArr(): ThemeInfo[] {
+    return this._themesArr;
   }
 
   public async UpdateCards(filter: NotesFilter, cursor: number) {
