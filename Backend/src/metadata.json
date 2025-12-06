@@ -1,0 +1,42 @@
+{
+  "current_id": 13,
+  "themes": [
+    { "Id": 0, "Title": "Все" },
+    { "Id": 1, "Title": "Golang" },
+    { "Id": 2, "Title": "CSharp" },
+    { "Id": 3, "Title": "TypeScript" }
+  ],
+  "tags": [
+    { "Id": 0, "Title": "golang", "ColorId": 0 },
+    { "Id": 1, "Title": "csharp", "ColorId": 1 },
+    { "Id": 2, "Title": "typeScript", "ColorId": 2 }
+  ],
+  "tag_colors": [
+    { "Id": 0, "Name": "Голубой", "Variable": "var(--tag-color-0)" },
+    { "Id": 1, "Name": "Фиолетовый", "Variable": "var(--tag-color-1)" },
+    { "Id": 2, "Name": "Зеленый", "Variable": "var(--tag-color-2)" },
+    { "Id": 3, "Name": "Оранжевый", "Variable": "var(--tag-color-3)" },
+    { "Id": 4, "Name": "Розовый", "Variable": "var(--tag-color-4)" },
+    { "Id": 5, "Name": "Бирюзовый", "Variable": "var(--tag-color-5)" },
+    { "Id": 6, "Name": "Желтый", "Variable": "var(--tag-color-6)" },
+    { "Id": 7, "Name": "Бежевый", "Variable": "var(--tag-color-7)" },
+    { "Id": 8, "Name": "Синий", "Variable": "var(--tag-color-8)" },
+    { "Id": 9, "Name": "Лаймовый", "Variable": "var(--tag-color-9)" },
+    { "Id": 10, "Name": "Кремовый", "Variable": "var(--tag-color-10)" },
+    { "Id": 11, "Name": "Лимонный", "Variable": "var(--tag-color-11)" }
+  ],
+  "note_card_colors": [
+    { "Id": 0, "Name": "Розовый", "Variable": "var(--note-color-0)" },
+    { "Id": 1, "Name": "Персиковый", "Variable": "var(--note-color-1)" },
+    { "Id": 2, "Name": "Светло-желтый", "Variable": "var(--note-color-2)" },
+    { "Id": 3, "Name": "Мятный", "Variable": "var(--note-color-3)" },
+    { "Id": 4, "Name": "Голубой", "Variable": "var(--note-color-4)" },
+    { "Id": 5, "Name": "Лавандовый", "Variable": "var(--note-color-5)" },
+    { "Id": 6, "Name": "Розово-персиковый", "Variable": "var(--note-color-6)" },
+    { "Id": 7, "Name": "Аквамариновый", "Variable": "var(--note-color-7)" },
+    { "Id": 8, "Name": "Песочный", "Variable": "var(--note-color-8)" },
+    { "Id": 9, "Name": "Светло-зеленый", "Variable": "var(--note-color-9)" },
+    { "Id": 10, "Name": "Светло-синий", "Variable": "var(--note-color-10)" },
+    { "Id": 11, "Name": "Сиреневый", "Variable": "var(--note-color-11)" }
+  ]
+}
