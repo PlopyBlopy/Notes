@@ -7,8 +7,8 @@ import (
 )
 
 type INoteManager interface {
-	AddNote(title, description string, themeId, noteColorId int, tagIds ...int) error
-	GetFilteredNoteCards(search string, limit, themeId int, tags ...int) ([]note.NoteCard, error)
+	AddNote(note.CreateNote) error
+	GetFilteredNoteCards(completed bool, search string, limit, cursor, themeId int, tags ...int) ([]note.NoteCard, int, error)
 }
 
 type NoteService struct {
@@ -20,14 +20,17 @@ func NewNoteService(nm INoteManager) (*NoteService, error) {
 }
 
 func (ns NoteService) AddNote(note note.CreateNote) error {
-	ns.noteManager.AddNote(note.Title, note.Description, note.ThemeId, note.NoteColorId, note.TagIds...)
+	err := ns.noteManager.AddNote(note)
+	if err != nil {
+		return fmt.Errorf("failed add note: %w", err)
+	}
 	return nil
 }
 
-func (ns NoteService) GetFilteredNoteCards(search string, limit, themeId int, tagIds ...int) ([]note.NoteCard, error) {
-	noteCards, err := ns.noteManager.GetFilteredNoteCards(search, limit, themeId, tagIds...)
+func (ns NoteService) GetFilteredNoteCards(completed bool, search string, limit, cursor, themeId int, tagIds ...int) ([]note.NoteCard, int, error) {
+	noteCards, c, err := ns.noteManager.GetFilteredNoteCards(completed, search, limit, cursor, themeId, tagIds...)
 	if err != nil {
-		return nil, fmt.Errorf("failed get filtered note cards")
+		return nil, 0, fmt.Errorf("failed get filtered note cards: %w", err)
 	}
-	return noteCards, nil
+	return noteCards, c, nil
 }
