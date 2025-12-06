@@ -4,86 +4,50 @@ import { ThemeRow } from "@/widgets/theme-row";
 import { useEffect, useState } from "react";
 import { TagsSelect } from "@/widgets/tag-select";
 import { SearchBar } from "@/widgets/search-bar";
-import { getNotes, getTags, getThemes, type NoteMetadata, type NotesFilter, type TagInfo, type Theme } from "@/shared/api";
-
-//TODO: сохранить палитру цветов и их имен в массиве, что бы не делать каждый раз запрос в api
+import { type NotesFilter } from "@/shared/api";
+import { useStore } from "@/shared/hook/store";
 
 export const MainPage = () => {
-  const [themes, setThemes] = useState<Theme[]>([]);
-  const [tags, setTags] = useState<TagInfo[]>([]);
-  const [notes, setNotes] = useState<NoteMetadata[]>([]);
-  // const [search, setSearch] = useState<string>("");
-
-  const [isLoading, setIsLoading] = useState({
-    notes: true,
-    tags: true,
-    themes: true,
-  });
+  const { updCards } = useStore();
 
   const [filter, setFilter] = useState<NotesFilter>({
-    limit: 20,
+    completed: false,
     search: "",
-    theme: 0,
-    tags: [],
+    limit: 20,
+    themeId: 0,
+    tagIds: [],
   });
-
-  useEffect(() => {
-    const loadTags = async () => {
-      const data = await getTags();
-      setTags(data);
-      setIsLoading((prev) => ({ ...prev, tags: false }));
-    };
-
-    loadTags();
-  }, []);
-
-  useEffect(() => {
-    const loadThemes = async () => {
-      const data = await getThemes();
-      setThemes(data);
-      setIsLoading((prev) => ({ ...prev, themes: false }));
-    };
-
-    loadThemes();
-  }, []);
+  const [cursor, setCursor] = useState<number>(0);
 
   useEffect(() => {
     const loadNotes = async () => {
-      setIsLoading((prev) => ({ ...prev, notes: true }));
-      const data = await getNotes(filter);
-      setNotes(data);
-      setIsLoading((prev) => ({ ...prev, notes: false }));
+      updCards(filter, cursor);
     };
 
     loadNotes();
   }, [filter]);
 
-  const handleTagsChange = (selectedTags: number[]) => {
-    setFilter((prev) => ({ ...prev, tags: selectedTags }));
+  const handleSearchChange = (search: string) => {
+    setFilter((prev) => ({ ...prev, search: search }));
+    setCursor(0);
   };
 
   const handleThemeChange = (selectedTheme: number) => {
-    setFilter((prev) => ({ ...prev, theme: selectedTheme }));
+    setFilter((prev) => ({ ...prev, themeId: selectedTheme }));
+    setCursor(0);
   };
 
-  const handleSearchChange = (search: string) => {
-    setFilter((prev) => ({ ...prev, search: search }));
+  const handleTagsChange = (selectedTags: number[]) => {
+    setFilter((prev) => ({ ...prev, tagIds: selectedTags }));
+    setCursor(0);
   };
 
-  // const handleFilter = (e: React.ChangeEvent<HTMLInputElement>) => {
-  //   const { name, value } = e.target;
-  //   setFilter((prev) => ({ ...prev, [name]: value }));
-  // };
   return (
     <div className={styles.container}>
-      {isLoading.themes ? <>Loading themes...</> : <ThemeRow options={themes} value={filter.theme} onChange={handleThemeChange} />}
+      <ThemeRow value={filter.themeId} onChange={handleThemeChange} />
       <SearchBar value={filter.search} onSearch={handleSearchChange} placeholder="Поиск заметок..." delay={300} />
-      {isLoading.tags ? (
-        <>Loading tags...</>
-      ) : (
-        <TagsSelect options={tags} value={filter.tags} onChange={handleTagsChange} placeholder="Теги еще не созданы" />
-      )}
-      {isLoading.notes ? <>Loading notes...</> : <NoteList notesMetadata={notes} />}
+      <TagsSelect value={filter.tagIds} onChange={handleTagsChange} placeholder="Теги еще не созданы" />
+      <NoteList />
     </div>
   );
 };

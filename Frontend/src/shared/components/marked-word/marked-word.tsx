@@ -6,7 +6,7 @@ export interface Style {
 }
 
 interface Props extends Style {
-  text: string;
+  text: string | undefined;
 }
 
 export const MarkedWord = ({ text, color, backgroundColor }: Props) => {

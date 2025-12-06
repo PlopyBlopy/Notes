@@ -1,5 +1,6 @@
-import { TagColorData, type TagInfo } from "@/shared/api";
+import { type TagInfo } from "@/shared/api";
 import { MarkedWord } from "@/shared/components/marked-word";
+import { useStore } from "@/shared/hook/store";
 
 type Props = {
   tag: TagInfo | undefined;
@@ -8,9 +9,10 @@ type Props = {
 export const Tag = ({ tag }: Props) => {
   if (!tag) {
     console.warn("Tag component received undefined tag");
-    return null; // или <div>Неизвестный тег</div>
+    return null;
   }
-  const tagColor = TagColorData[tag.colorId];
 
-  return <MarkedWord text={tag.title} color={"var(--tag-text-color)"} backgroundColor={tagColor.variable} />;
+  const { tagColors } = useStore();
+
+  return <MarkedWord text={tag.title} color={"var(--tag-text-color)"} backgroundColor={tagColors.get(tag.colorId)?.variable} />;
 };
