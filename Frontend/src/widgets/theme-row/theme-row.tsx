@@ -7,12 +7,12 @@ type Props = {
 };
 
 export const ThemeRow = ({ value, onChange }: Props) => {
-  const { themes } = useStore();
+  const { themeArr } = useStore();
 
   return (
     <div className={styles.container}>
       <div className={styles.themeContainer}>
-        {themes.map((t, i) => (
+        {themeArr.map((t, i) => (
           <button key={`theme-${i}`} className={value === t.id ? styles.selectButton : styles.button} onClick={() => onChange(t.id)}>
             {t.title}
           </button>
