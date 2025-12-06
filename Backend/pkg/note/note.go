@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 )
 
 type NoteManager struct {
@@ -34,7 +35,9 @@ func NewNoteManager(mm IMetadataManager, ni INoteIndexManager, im IIndexManager)
 func (nm NoteManager) existOrCreate() error {
 	isentry := false
 
-	files, _ := os.ReadDir(nm.metadataManager.NotePath())
+	p := filepath.Join(nm.metadataManager.BasePath(), nm.metadataManager.NotePath())
+
+	files, _ := os.ReadDir(p)
 
 	noteFileName := nm.metadataManager.NoteFileName()
 	for _, file := range files {
@@ -44,7 +47,7 @@ func (nm NoteManager) existOrCreate() error {
 		}
 	}
 
-	p := filepath.Join(nm.metadataManager.BasePath(), nm.metadataManager.NotePath(), nm.metadataManager.NoteFileName())
+	p = filepath.Join(nm.metadataManager.BasePath(), nm.metadataManager.NotePath(), nm.metadataManager.NoteFileName())
 
 	empty := []interface{}{}
 
@@ -64,22 +67,24 @@ func (nm NoteManager) existOrCreate() error {
 	return nil
 }
 
-func (nm *NoteManager) AddNote(title, description string, themeId, noteColorId int, tagIds ...int) error {
+func (nm *NoteManager) AddNote(createNote CreateNote) error {
 	noteId := nm.metadataManager.GetNoteId()
 
 	note := Note{
 		Id:          noteId,
-		Title:       title,
-		Description: description,
+		Title:       createNote.Title,
+		Description: createNote.Description,
 	}
 
 	notePath := filepath.Join(nm.metadataManager.BasePath(), nm.metadataManager.NotePath(), nm.metadataManager.NoteFileName())
 	noteFile, _ := os.OpenFile(notePath, os.O_RDWR, 0666)
 	defer noteFile.Close()
+
 	b, _ := json.Marshal(note)
 	off, size := WriteAt(b, noteFile)
 
-	err := nm.noteIndexManager.AddNoteIndex(noteId, themeId, noteColorId, size, off, tagIds...)
+	// add to indexes
+	err := nm.noteIndexManager.AddNoteIndex(noteId, createNote.ThemeId, createNote.NoteColorId, size, off, createNote.TagIds...)
 	if err != nil {
 		// nm.RemoveLastNote()
 		return err
@@ -92,7 +97,7 @@ func (nm *NoteManager) AddNote(title, description string, themeId, noteColorId i
 	return nil
 }
 
-func (nm NoteManager) GetFilteredNoteCards(search string, limit, themeId int, tagIds ...int) ([]NoteCard, error) {
+func (nm NoteManager) GetFilteredNoteCards(completed bool, search string, limit, cursor, themeId int, tagIds ...int) ([]NoteCard, int, error) {
 	filter := 0
 	notes := map[int]int{}
 
@@ -123,19 +128,17 @@ func (nm NoteManager) GetFilteredNoteCards(search string, limit, themeId int, ta
 		filter++
 	}
 
-	if themeId >= 0 {
-		themeNotes, err := nm.indexManager.GetFilteredThemeNoteIds(themeId)
-		if err != nil {
+	themeNotes, err := nm.indexManager.GetFilteredThemeNoteIds(themeId)
+	if err != nil {
 
-		}
-
-		if len(themeNotes) != 0 {
-			for _, i := range themeNotes {
-				notes[i]++
-			}
-		}
-		filter++
 	}
+
+	if len(themeNotes) != 0 {
+		for _, i := range themeNotes {
+			notes[i]++
+		}
+	}
+	filter++
 
 	res := []NoteCard{}
 
@@ -148,17 +151,22 @@ func (nm NoteManager) GetFilteredNoteCards(search string, limit, themeId int, ta
 			}
 		}
 
-		completedNotes, err := nm.indexManager.GetCompletedNotesFilteredNoteIds(noteIds...)
-		if err != nil {
+		sort.Ints(noteIds)
 
+		filteredNotes, c, err := nm.indexManager.GetNotes(completed, cursor, limit, noteIds...)
+		if err != nil {
+			return nil, cursor, err
 		}
+
+		cursor = c
+
 		noteIndexes, err := nm.indexManager.GetNoteIndexesFilteredNoteIds(noteIds...)
 		if err != nil {
 
 		}
 
-		for i := 0; i < len(noteIds); i++ {
-			note := completedNotes[i]
+		for i := 0; i < len(filteredNotes); i++ {
+			note := filteredNotes[i]
 			noteIndex := noteIndexes[i]
 			res = append(res, NoteCard{
 				Note:        note,
@@ -171,7 +179,7 @@ func (nm NoteManager) GetFilteredNoteCards(search string, limit, themeId int, ta
 		}
 	}
 
-	return res, nil
+	return res, cursor, nil
 }
 
 func (nm *NoteManager) RemoveLastNote() {
