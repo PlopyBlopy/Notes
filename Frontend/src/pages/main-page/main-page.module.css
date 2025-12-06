@@ -1,6 +1,20 @@
 .container {
   width: 70vw;
+
   display: flex;
   flex-direction: column;
   gap: 1rem;
+
+  min-width: 0;
+}
+@media (max-width: 1200px) {
+  .container {
+    width: 85vw;
+  }
+}
+
+@media (max-width: 768px) {
+  .container {
+    width: 95vw;
+  }
 }
