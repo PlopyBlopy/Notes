@@ -1,7 +1,6 @@
-import { NoteColorData, Notes, TagColorData, TagData, ThemeData } from "./api.config";
-import type { ColorInfo, CreateNote, NoteMetadata, NotesFilter, TagInfo, Theme, UpdateNote } from "./api.model";
+import type { ColorInfo, CreateNote, NotesFilter, TagInfo, ThemeInfo, FilteredNotes } from "./api.model";
 
-const apiurl = "http://localhost:4153";
+const apiurl = "http://localhost:8080/api/v1";
 
 export const postNote = async (note: CreateNote) => {
   const response = await fetch(`${apiurl}/note`, {
@@ -11,57 +10,58 @@ export const postNote = async (note: CreateNote) => {
     },
     body: JSON.stringify(note),
   });
-  return await response.json();
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
 };
 
 // export const postTag = async (tag: TagInfo) => {};
 
 // export const postCompleteNote = async (id: number) => {};
 
-export const getNotes = async (filter: NotesFilter): Promise<NoteMetadata[]> => {
-  // const params = new URLSearchParams({
-  //   limit: `${filter.limit}`,
-  //   search: `${filter.search}`,
-  //   theme: `${filter.theme}`,
-  //   tags: `${filter.tags}`,
-  // });
+export const getNotes = async (filter: NotesFilter, cursor: number): Promise<FilteredNotes> => {
+  const params = new URLSearchParams({
+    completed: `${filter.completed}`,
+    search: `${filter.search}`,
+    limit: `${filter.limit}`,
+    cursor: `${cursor}`,
+    themeId: `${filter.themeId}`,
+    tagIds: `${filter.tagIds}`,
+  });
 
-  // const response = await fetch(`${apiurl}/note?${params}`);
-  // const data = await response.json();
-  // return data;
-  return await Notes(filter.theme, filter.tags);
+  const response = await fetch(`${apiurl}/note/card/filtered?${params}`);
+  const data: FilteredNotes = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return data || [];
 };
 
 export const getTags = async (): Promise<TagInfo[]> => {
-  // const response = await fetch(`${apiurl}/note/tags`);
-  // const data = await response.json();
-  // return data;
-
-  return await TagData;
+  const response = await fetch(`${apiurl}/note/tag`);
+  const data = await response.json();
+  return data;
 };
 
-export const getThemes = async (): Promise<Theme[]> => {
-  // const response = await fetch(`${apiurl}/note/themes`);
-  // const data = await response.json();
-  // return data;
-
-  return await ThemeData;
+export const getTagColors = async (): Promise<ColorInfo[]> => {
+  const response = await fetch(`${apiurl}/note/tag/color`);
+  const data = await response.json();
+  return data;
 };
 
-export const getTagsColors = (): ColorInfo[] => {
-  // const response = await fetch(`${apiurl}/note/colors`);
-  // const data = await response.json();
-  // return data;
-
-  return TagColorData;
+export const getThemes = async (): Promise<ThemeInfo[]> => {
+  const response = await fetch(`${apiurl}/note/theme`);
+  const data = await response.json();
+  return data;
 };
 
-export const getNoteColors = (): ColorInfo[] => {
-  // const response = await fetch(`${apiurl}/note/tags/colors`);
-  // const data = await response.json();
-  // return data;
-
-  return NoteColorData;
+export const getCardColors = async (): Promise<ColorInfo[]> => {
+  const response = await fetch(`${apiurl}/note/card/color`);
+  const data = await response.json();
+  return data;
 };
 
 // export const patchNote = async (note: UpdateNote) => {};

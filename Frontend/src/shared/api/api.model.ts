@@ -1,8 +1,13 @@
-export type NoteMetadata = {
+export type FilteredNotes = {
+  cards: Card[];
+  cursor: number;
+};
+
+export type Card = {
   note: Note;
   completed: boolean;
-  theme: number;
-  tagsId: number[];
+  themeId: number;
+  tagIds: number[];
   noteColorId: number;
   createdAt: string;
 };
@@ -17,7 +22,7 @@ export type CreateNote = {
   title: string;
   description: string;
   themeId: number;
-  tagsId: number[];
+  tagIds: number[];
   noteColorId: number;
 };
 
@@ -30,7 +35,7 @@ export type UpdateNote = {
   noteColorId: number;
 };
 
-export type Theme = {
+export type ThemeInfo = {
   id: number;
   title: string;
 };
@@ -43,13 +48,14 @@ export type TagInfo = {
 
 export type ColorInfo = {
   id: number;
-  variable: string;
   name: string;
+  variable: string;
 };
 
 export type NotesFilter = {
-  limit: number;
+  completed: boolean;
   search: string;
-  theme: number;
-  tags: number[];
+  limit: number;
+  themeId: number;
+  tagIds: number[];
 };
