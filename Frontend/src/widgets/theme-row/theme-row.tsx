@@ -1,17 +1,18 @@
+import { useStore } from "@/shared/hook/store";
 import styles from "./theme-row.module.css";
-import type { Theme } from "@/shared/api";
 
 type Props = {
-  options: Theme[];
   value: number;
   onChange: (value: number) => void;
 };
 
-export const ThemeRow = ({ options, value, onChange }: Props) => {
+export const ThemeRow = ({ value, onChange }: Props) => {
+  const { themes } = useStore();
+
   return (
     <div className={styles.container}>
       <div className={styles.themeContainer}>
-        {options.map((t, i) => (
+        {themes.map((t, i) => (
           <button key={`theme-${i}`} className={value === t.id ? styles.selectButton : styles.button} onClick={() => onChange(t.id)}>
             {t.title}
           </button>

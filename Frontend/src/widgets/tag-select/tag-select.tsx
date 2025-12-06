@@ -1,15 +1,16 @@
-import type { TagInfo } from "@/shared/api";
 import styles from "./tag-select.module.css";
 import { Tag } from "@/features/tag";
+import { useStore } from "@/shared/hook/store";
 
 interface TagsSelectProps {
-  options: TagInfo[];
   value: number[];
   onChange: (value: number[]) => void;
   placeholder?: string;
 }
 
-export const TagsSelect = ({ options, value = [], onChange, placeholder = "Теги еще не созданы" }: TagsSelectProps) => {
+export const TagsSelect = ({ value = [], onChange, placeholder = "Теги еще не созданы" }: TagsSelectProps) => {
+  const { tagArr } = useStore();
+
   const handleToggle = (option: number) => {
     if (value.includes(option)) {
       // Если тег уже выбран - удаляем
@@ -23,29 +24,24 @@ export const TagsSelect = ({ options, value = [], onChange, placeholder = "Те�
   return (
     <div className={styles.container}>
       <div className={styles.tagsRow}>
-        {options
-          .filter((option) => value.includes(option.colorId))
-          .map((option, index) => (
-            <div key={`selected-${index}`} className={styles.selectedTag} onClick={() => handleToggle(option.colorId)} title="Кликните чтобы удалить">
-              <Tag tag={option} />
+        {tagArr
+          .filter((tag) => value.includes(tag.id))
+          .map((tag, index) => (
+            <div key={`selected-${index}`} className={styles.selectedTag} onClick={() => handleToggle(tag.id)} title="Кликните чтобы удалить">
+              <Tag tag={tag} />
             </div>
           ))}
         {/* Затем доступные теги */}
-        {options
-          .filter((option) => !value.includes(option.colorId))
-          .map((option, index) => (
-            <div
-              key={`available-${index}`}
-              className={styles.availableTag}
-              onClick={() => handleToggle(option.colorId)}
-              title="Кликните чтобы добавить"
-            >
-              <Tag tag={option} />
+        {tagArr
+          .filter((tag) => !value.includes(tag.id))
+          .map((tag, index) => (
+            <div key={`available-${index}`} className={styles.availableTag} onClick={() => handleToggle(tag.id)} title="Кликните чтобы добавить">
+              <Tag tag={tag} />
             </div>
           ))}
 
         {/* Плейсхолдер, когда ничего не выбрано и нет тегов */}
-        {value.length === 0 && options.length === 0 && <span className={styles.placeholder}>{placeholder}</span>}
+        {value.length === 0 && tagArr.length === 0 && <span className={styles.placeholder}>{placeholder}</span>}
       </div>
     </div>
   );

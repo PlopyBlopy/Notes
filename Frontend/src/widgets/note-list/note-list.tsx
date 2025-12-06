@@ -1,17 +1,18 @@
-import styles from "./note-list.module.css";
 import { NoteCard } from "@/features/note-card";
-import { NoteColorData, type NoteMetadata } from "@/shared/api";
+import styles from "./note-list.module.css";
+import { useStore } from "@/shared/hook/store";
 
-type Props = {
-  // onClick: () => {};
-  notesMetadata: NoteMetadata[];
-};
+export const NoteList = () => {
+  const { cards } = useStore();
 
-export const NoteList = ({ notesMetadata }: Props) => {
+  const handleComplete = () => {};
+  const handleEdit = () => {};
+  const handleDelete = () => {};
+
   return (
     <div className={styles.container}>
-      {notesMetadata.map((nm) => (
-        <NoteCard key={nm.note.id} noteMetadata={nm} backgroundColor={NoteColorData[nm.noteColorId].variable} />
+      {cards?.map((c, i) => (
+        <NoteCard key={`card-${i}`} card={c} />
       ))}
     </div>
   );
