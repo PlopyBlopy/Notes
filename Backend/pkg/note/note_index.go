@@ -51,7 +51,9 @@ type INoteIndexManager interface {
 func (ni NoteIndexManager) existOrCreate() error {
 	isentry := false
 
-	files, _ := os.ReadDir(ni.metadataManager.IndexPath())
+	p := filepath.Join(ni.metadataManager.BasePath(), ni.metadataManager.IndexPath())
+
+	files, _ := os.ReadDir(p)
 
 	noteIndexFileName := ni.metadataManager.NoteIndexFileName()
 	for _, file := range files {
@@ -61,7 +63,7 @@ func (ni NoteIndexManager) existOrCreate() error {
 		}
 	}
 
-	p := filepath.Join(ni.metadataManager.BasePath(), ni.metadataManager.IndexPath(), noteIndexFileName)
+	p = filepath.Join(ni.metadataManager.BasePath(), ni.metadataManager.IndexPath(), noteIndexFileName)
 
 	empty := []interface{}{}
 
