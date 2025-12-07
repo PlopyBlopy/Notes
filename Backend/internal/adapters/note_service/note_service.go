@@ -9,6 +9,7 @@ import (
 type INoteManager interface {
 	AddNote(note.CreateNote) error
 	GetFilteredNoteCards(completed bool, search string, limit, cursor, themeId int, tags ...int) ([]note.NoteCard, int, error)
+	DeleteNote(id int) error
 }
 
 type NoteService struct {
@@ -33,4 +34,13 @@ func (ns NoteService) GetFilteredNoteCards(completed bool, search string, limit,
 		return nil, 0, fmt.Errorf("failed get filtered note cards: %w", err)
 	}
 	return noteCards, c, nil
+}
+
+func (ns NoteService) DeleteNote(id int) error {
+	err := ns.noteManager.DeleteNote(id)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
