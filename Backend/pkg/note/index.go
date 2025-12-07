@@ -42,6 +42,8 @@ type IIndexManager interface {
 	GetFilteredTitleNoteIds(search string) ([]int, error)
 	GetFilteredTagNoteIds(tagIds ...int) ([]int, error)
 	GetFilteredThemeNoteIds(themeId int) ([]int, error)
+
+	DeleteNote(id int) error
 }
 
 func NewIndexManager(mm IMetadataManager) (*IndexManager, error) {
@@ -65,6 +67,7 @@ func NewIndexManager(mm IMetadataManager) (*IndexManager, error) {
 func (im *IndexManager) Scan() error {
 	stages := [][]func() error{
 		{im.scanNoteIndex},
+		{im.clearRemovedNotes},
 		{im.scanNote, im.scanOffSize, im.scanNoteTheme, im.scanNoteTag},
 		{im.scanNoteTitle},
 	}
@@ -118,6 +121,64 @@ func (im *IndexManager) scanNoteIndex() error {
 	}
 
 	im.i.NoteIndexes = ni
+
+	return nil
+}
+
+func (im *IndexManager) clearRemovedNotes() error {
+	noteIndexes := []NoteIndex{}
+	deletedCount := 0
+
+	for _, v := range im.i.NoteIndexes {
+		if !v.Deleted {
+			noteIndexes = append(noteIndexes, v)
+		} else {
+			deletedCount++
+		}
+	}
+
+	if deletedCount == 0 {
+		return nil
+	}
+
+	im.i.NoteIndexes = noteIndexes
+
+	p := filepath.Join(im.metadataManager.BasePath(), im.metadataManager.IndexPath(), im.metadataManager.NoteIndexFileName())
+
+	b, err := json.Marshal(noteIndexes)
+	if err != nil {
+
+	}
+
+	err = os.WriteFile(p, b, 0222)
+	if err != nil {
+
+	}
+
+	p = filepath.Join(im.metadataManager.BasePath(), im.metadataManager.NotePath(), im.metadataManager.NoteFileName())
+	b, err = os.ReadFile(p)
+	if err != nil {
+
+	}
+	n := []Note{}
+	json.Unmarshal(b, &n)
+
+	notes := []Note{}
+	for i := 0; i < len(im.i.NoteIndexes); i++ {
+		if n[i].Id == im.i.NoteIndexes[i].Id {
+			notes = append(notes, n[i])
+		}
+	}
+
+	b, err = json.Marshal(notes)
+	if err != nil {
+
+	}
+
+	err = os.WriteFile(p, b, 0222)
+	if err != nil {
+
+	}
 
 	return nil
 }
@@ -298,8 +359,9 @@ func (im *IndexManager) GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteInd
 
 	for _, n := range noteIndexes {
 		for _, id := range noteIds {
-			if n.Id == id {
+			if n.Id == id && !n.Deleted {
 				notes = append(notes, n)
+				break
 			}
 		}
 	}
@@ -373,4 +435,132 @@ func (im *IndexManager) GetFilteredThemeNoteIds(themeId int) ([]int, error) {
 	}
 
 	return ids, nil
+}
+
+func (im *IndexManager) DeleteNote(id int) error {
+	isDeleted := false
+	for i, _ := range im.i.NoteIndexes {
+		if im.i.NoteIndexes[i].Id == id {
+			im.i.NoteIndexes[i].Deleted = true
+			im.removeFromTitles(id)
+			im.removeFromThemes(id, im.i.NoteIndexes[i].ThemeId)
+			im.removeFromTags(id, im.i.NoteIndexes[i].TagIds...)
+			im.removeFromNotes(id, im.i.NoteIndexes[i].Completed)
+			// im.removeFromIndexes(im.i.NoteIndexes[i])
+			isDeleted = true
+			break
+		}
+	}
+	if !isDeleted {
+		return fmt.Errorf("failed deleted note")
+	}
+
+	b, err := json.Marshal(im.i.NoteIndexes)
+	if err != nil {
+
+	}
+
+	p := filepath.Join(im.metadataManager.BasePath(), im.metadataManager.IndexPath(), im.metadataManager.NoteIndexFileName())
+
+	err = os.WriteFile(p, b, 0222)
+	if err != nil {
+
+	}
+
+	return nil
+}
+
+func (im *IndexManager) removeFromTitles(id int) error {
+	titles := make(map[string]int, len(im.i.NoteTitles)-1)
+	for k, v := range im.i.NoteTitles {
+		if v != id {
+			titles[k] = v
+		}
+	}
+	im.i.NoteTitles = titles
+
+	return nil
+}
+
+func (im *IndexManager) removeFromThemes(id, themeId int) error {
+	themes := make(map[int][]int, len(im.i.Themes))
+	for k, v := range im.i.Themes {
+		ids := []int{}
+
+		if k == 0 {
+			for i, _ := range v {
+				if v[i] != id {
+					ids = append(ids, v[i])
+				}
+			}
+			themes[k] = ids
+			continue
+		}
+
+		if k == themeId {
+			for i, _ := range v {
+				if v[i] != id {
+					ids = append(ids, v[i])
+				}
+			}
+		}
+
+		if len(ids) != 0 {
+			themes[k] = ids
+		} else {
+			themes[k] = v
+		}
+	}
+	im.i.Themes = themes
+
+	return nil
+}
+
+func (im *IndexManager) removeFromTags(id int, tagIds ...int) error {
+	tags := make(map[int][]int, len(im.i.Tags))
+	for k, v := range im.i.Tags {
+		ids := []int{}
+
+		for _, id := range tagIds {
+			if k == id {
+				for i, _ := range v {
+					if v[i] != id {
+						ids = append(ids, v[i])
+					}
+				}
+				break
+			}
+		}
+
+		if len(ids) != 0 {
+			tags[k] = ids
+		} else {
+			tags[k] = v
+		}
+	}
+	im.i.Tags = tags
+
+	return nil
+}
+
+func (im *IndexManager) removeFromNotes(id int, completed bool) error {
+	var indexNotes *[]Note
+
+	if completed {
+		indexNotes = &im.i.CompletedNotes
+	} else {
+		indexNotes = &im.i.UncompletedNotes
+	}
+
+	notes := make([]Note, 0, len(*indexNotes))
+
+	for _, v := range *indexNotes {
+		if v.Id != id {
+			notes = append(notes, v)
+		}
+	}
+
+	*indexNotes = notes
+
+	return nil
 }
