@@ -168,6 +168,7 @@ func (nm NoteManager) GetFilteredNoteCards(completed bool, search string, limit,
 		for i := 0; i < len(filteredNotes); i++ {
 			note := filteredNotes[i]
 			noteIndex := noteIndexes[i]
+
 			res = append(res, NoteCard{
 				Note:        note,
 				Completed:   noteIndex.Completed,
@@ -182,6 +183,11 @@ func (nm NoteManager) GetFilteredNoteCards(completed bool, search string, limit,
 	return res, cursor, nil
 }
 
-func (nm *NoteManager) RemoveLastNote() {
+func (nm NoteManager) DeleteNote(id int) error {
+	err := nm.indexManager.DeleteNote(id)
+	if err != nil {
+		return err
+	}
 
+	return nil
 }
