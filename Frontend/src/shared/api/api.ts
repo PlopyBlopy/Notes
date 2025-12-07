@@ -66,4 +66,16 @@ export const getCardColors = async (): Promise<ColorInfo[]> => {
 
 // export const patchNote = async (note: UpdateNote) => {};
 
-// export const deleteNote = async (id: number) => {};
+export const deleteNote = async (id: number) => {
+  const params = new URLSearchParams({
+    id: `${id}`,
+  });
+
+  const response = await fetch(`${apiurl}/note?${params}`, {
+    method: "DELETE",
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+};
