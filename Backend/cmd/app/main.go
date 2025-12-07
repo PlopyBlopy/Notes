@@ -22,6 +22,7 @@ import (
 	gettags "github.com/PlopyBlopy/notebot/internal/metadata/get_tags"
 	getthemes "github.com/PlopyBlopy/notebot/internal/metadata/get_themes"
 	addnote "github.com/PlopyBlopy/notebot/internal/note/add_note"
+	deletenote "github.com/PlopyBlopy/notebot/internal/note/delete_note"
 	getfilterednotecards "github.com/PlopyBlopy/notebot/internal/note/get_filtered_note_cards"
 	"github.com/PlopyBlopy/notebot/pkg/httpserver"
 	"github.com/PlopyBlopy/notebot/pkg/logger"
@@ -95,6 +96,8 @@ func App(ctx context.Context, c config.Config) error {
 	gettagcolorUcecase := gettagcolor.NewUsecase(metadataService)
 	getthemesUcecase := getthemes.NewUsecase(metadataService)
 
+	deletenoteUcecase := deletenote.NewUsecase(noteService)
+
 	/* http handlers */
 	addNoteHandler := addnote.NewHttpHandler(addnoteUcecase)
 	addtagHandler := addtag.NewHttpHandler(addtagUsecase)
@@ -107,6 +110,8 @@ func App(ctx context.Context, c config.Config) error {
 	gettagsHandler := gettags.NewHttpHandler(gettagsUcecase)
 	gettagcolorHandler := gettagcolor.NewHttpHandler(gettagcolorUcecase)
 	getthemesHandler := getthemes.NewHttpHandler(getthemesUcecase)
+
+	deletenoteHandler := deletenote.NewHttpHandler(deletenoteUcecase)
 
 	/* http router  */
 	sm := router.NewServeMux()
@@ -122,6 +127,8 @@ func App(ctx context.Context, c config.Config) error {
 	sm.AddHandler("GET /note/tag", gettagsHandler)
 	sm.AddHandler("GET /note/tag/color", gettagcolorHandler)
 	sm.AddHandler("GET /note/theme", getthemesHandler)
+
+	sm.AddHandler("DELETE /note", deletenoteHandler)
 
 	httpRouter := sm.InitRouter(1)
 
