@@ -55,6 +55,11 @@ export function useStore() {
         storeInstance.UpdateCards(filter, cursor);
       });
     },
+    delNote: (id: number) => {
+      store.then((storeInstance) => {
+        storeInstance.DeleteNote(id);
+      });
+    },
   };
 
   return { cards, tags, tagArr, tagColors, cardColors, cardColorArr, themes, themeArr, ...actions };

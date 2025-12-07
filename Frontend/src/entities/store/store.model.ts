@@ -1,4 +1,5 @@
 import {
+  deleteNote,
   getCardColors,
   getNotes,
   getTagColors,
@@ -29,6 +30,15 @@ class Store {
     await Promise.all([store.initCards(), store.initTags(), store.initTagColors(), store.initCardColors(), store.initThemes()]);
     store.notify();
     return store;
+  }
+
+  Subscribe(callback: () => void): () => void {
+    this.listeners.add(callback);
+    return () => this.listeners.delete(callback);
+  }
+
+  private notify(): void {
+    this.listeners.forEach((cb) => cb());
   }
 
   private initCards = async () => {
@@ -120,13 +130,8 @@ class Store {
     this.notify();
   }
 
-  Subscribe(callback: () => void): () => void {
-    this.listeners.add(callback);
-    return () => this.listeners.delete(callback);
-  }
-
-  private notify(): void {
-    this.listeners.forEach((cb) => cb());
+  public async DeleteNote(id: number) {
+    await deleteNote(id);
   }
 }
 
