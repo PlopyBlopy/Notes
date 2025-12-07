@@ -20,12 +20,12 @@ export const MainPage = () => {
   const [cursor, setCursor] = useState<number>(0);
 
   useEffect(() => {
-    const loadNotes = async () => {
-      updCards(filter, cursor);
-    };
-
-    loadNotes();
+    handleUpdateCards();
   }, [filter]);
+
+  const handleUpdateCards = async () => {
+    await updCards(filter, cursor);
+  };
 
   const handleSearchChange = (search: string) => {
     setFilter((prev) => ({ ...prev, search: search }));
@@ -47,7 +47,7 @@ export const MainPage = () => {
       <ThemeRow value={filter.themeId} onChange={handleThemeChange} />
       <SearchBar value={filter.search} onSearch={handleSearchChange} placeholder="Поиск заметок..." delay={300} />
       <TagsSelect value={filter.tagIds} onChange={handleTagsChange} placeholder="Теги еще не созданы" />
-      <NoteList />
+      <NoteList onUpdateCards={handleUpdateCards} />
     </div>
   );
 };
