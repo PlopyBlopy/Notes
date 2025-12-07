@@ -36,6 +36,7 @@ type IIndexManager interface {
 	AddNote(note Note) error
 	AddNoteIndex(noteIndex NoteIndex) error
 
+	GetNote(completed bool, noteId int) (Note, error)
 	GetNotes(completed bool, cursor, limit int, noteIds ...int) ([]Note, int, error)
 	GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteIndex, error)
 
@@ -317,6 +318,25 @@ func (im *IndexManager) AddNoteIndex(noteIndex NoteIndex) error {
 	return nil
 }
 
+func (im *IndexManager) GetNote(completed bool, noteId int) (Note, error) {
+	note := Note{}
+	var indexNotes []Note
+
+	if completed {
+		indexNotes = im.i.CompletedNotes
+	} else {
+		indexNotes = im.i.UncompletedNotes
+	}
+	for _, v := range indexNotes {
+		if v.Id == noteId {
+			note = v
+			break
+		}
+	}
+
+	return note, nil
+}
+
 func (im *IndexManager) GetNotes(completed bool, cursor, limit int, noteIds ...int) ([]Note, int, error) {
 	cap := limit
 	if len(noteIds) < limit {
@@ -359,7 +379,7 @@ func (im *IndexManager) GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteInd
 
 	for _, n := range noteIndexes {
 		for _, id := range noteIds {
-			if n.Id == id && !n.Deleted {
+			if n.Id == id {
 				notes = append(notes, n)
 				break
 			}
