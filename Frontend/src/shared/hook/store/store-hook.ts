@@ -1,5 +1,5 @@
 import { store } from "@/entities/store";
-import { type Card, type ColorInfo, type NotesFilter, type TagInfo, type ThemeInfo } from "@/shared/api";
+import { type Card, type ColorInfo, type CreateNote, type NotesFilter, type TagInfo, type ThemeInfo } from "@/shared/api";
 import { useEffect, useState } from "react";
 
 export function useStore() {
@@ -11,6 +11,8 @@ export function useStore() {
   const [tagColors, setTagColors] = useState<Map<number, ColorInfo>>(new Map());
   const [cardColors, setCardColors] = useState<Map<number, ColorInfo>>(new Map());
   const [cardColorArr, setCardColorArr] = useState<ColorInfo[]>([]);
+
+  const [filter, setFilter] = useState<NotesFilter>();
 
   useEffect(() => {
     let unsubscribe: (() => void) | null = null;
@@ -27,6 +29,7 @@ export function useStore() {
       setTagColors(storeInstance.GetTagColors());
       setCardColors(storeInstance.GetCardColors());
       setCardColorArr(storeInstance.GetCardColorArr());
+      setFilter(storeInstance.GetFilter());
 
       unsubscribe = storeInstance.Subscribe(() => {
         if (!mounted) return;
@@ -38,6 +41,7 @@ export function useStore() {
         setTagColors(storeInstance.GetTagColors());
         setCardColors(storeInstance.GetCardColors());
         setCardColorArr(storeInstance.GetCardColorArr());
+        setFilter(storeInstance.GetFilter());
       });
     });
 
@@ -50,14 +54,29 @@ export function useStore() {
   }, []);
 
   const actions = {
-    updCards: (filter: NotesFilter, cursor: number) => {
+    postNote: (note: CreateNote) => {
       store.then((storeInstance) => {
-        storeInstance.UpdateCards(filter, cursor);
+        storeInstance.PostNote(note);
+      });
+    },
+    updCards: () => {
+      store.then((storeInstance) => {
+        storeInstance.UpdateCards();
       });
     },
     updNoteCompleted: (id: number, completed: boolean) => {
       store.then((storeInstance) => {
         storeInstance.UpdateNoteCompleted(id, completed);
+      });
+    },
+    updNoteFilter: (filter: Partial<NotesFilter>) => {
+      store.then((storeInstance) => {
+        storeInstance.UpdateFilter(filter);
+      });
+    },
+    resetCursor: () => {
+      store.then((storeInstance) => {
+        storeInstance.ResetCursor();
       });
     },
     delNote: (id: number) => {
@@ -67,5 +86,5 @@ export function useStore() {
     },
   };
 
-  return { cards, tags, tagArr, tagColors, cardColors, cardColorArr, themes, themeArr, ...actions };
+  return { cards, tags, tagArr, tagColors, cardColors, cardColorArr, themes, themeArr, filter, ...actions };
 }

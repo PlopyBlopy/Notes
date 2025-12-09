@@ -6,8 +6,10 @@ import {
   getTags,
   getThemes,
   patchNoteCompleted,
+  postNote,
   type Card,
   type ColorInfo,
+  type CreateNote,
   type FilteredNotes,
   type NotesFilter,
   type TagInfo,
@@ -24,7 +26,21 @@ class Store {
   private _cardColors: Map<number, ColorInfo> = new Map();
   private _cardColorArr: ColorInfo[] = [];
 
+  private _filter: NotesFilter;
+  private _cursor: number;
+
   private listeners = new Set<() => void>();
+
+  constructor() {
+    this._filter = {
+      completed: false,
+      search: "",
+      limit: 20,
+      themeId: 0,
+      tagIds: [],
+    };
+    this._cursor = 0;
+  }
 
   static async Init(): Promise<Store> {
     const store = new Store();
@@ -42,18 +58,12 @@ class Store {
     this.listeners.forEach((cb) => cb());
   }
 
-  private initCards = async () => {
-    const filter: NotesFilter = {
-      completed: false,
-      search: "",
-      limit: 20,
-      themeId: 0,
-      tagIds: [],
-    };
-    const data: FilteredNotes = await getNotes(filter, 0);
+  private async initCards() {
+    const data: FilteredNotes = await getNotes(this._filter, this._cursor);
 
     this._cards = data.cards;
-  };
+    this._cursor = data.cursor;
+  }
 
   private initTags = async () => {
     const tags: TagInfo[] = await getTags();
@@ -65,15 +75,15 @@ class Store {
     this._tagArr = tags;
   };
 
-  private initTagColors = async () => {
+  private async initTagColors() {
     const colors: ColorInfo[] = await getTagColors();
 
     colors.forEach((color) => {
       this._tagColors.set(color.id, color);
     });
-  };
+  }
 
-  private initCardColors = async () => {
+  private async initCardColors() {
     const colors: ColorInfo[] = await getCardColors();
 
     colors.forEach((color) => {
@@ -81,9 +91,9 @@ class Store {
     });
 
     this._cardColorArr = colors;
-  };
+  }
 
-  private initThemes = async () => {
+  private async initThemes() {
     const themes: ThemeInfo[] = await getThemes();
 
     themes.forEach((theme) => {
@@ -91,7 +101,12 @@ class Store {
     });
 
     this._themesArr = themes;
-  };
+  }
+
+  public async PostNote(note: CreateNote) {
+    await postNote(note);
+    await this.UpdateCards();
+  }
 
   public GetCards(): Card[] {
     return this._cards;
@@ -122,17 +137,40 @@ class Store {
   public GetThemeArr(): ThemeInfo[] {
     return this._themesArr;
   }
+  public GetFilter(): NotesFilter {
+    return this._filter;
+  }
 
-  public async UpdateCards(filter: NotesFilter, cursor: number) {
-    const data: FilteredNotes = await getNotes(filter, cursor);
+  public async UpdateCards() {
+    const data: FilteredNotes = await getNotes(this._filter, this._cursor);
 
+    if (this._cursor === 0) {
     this._cards = data.cards;
+    } else {
+      this._cards = this._cards.concat(data.cards);
+    }
+    this._cursor = data.cursor;
 
     this.notify();
   }
 
   public async UpdateNoteCompleted(id: number, completed: boolean) {
     await patchNoteCompleted(id, completed);
+await this.UpdateCards();
+  }
+
+  public UpdateFilter(partialFilter: Partial<NotesFilter>) {
+    this._filter = {
+      ...this._filter,
+      ...partialFilter,
+    };
+
+    this.ResetCursor();
+    this.UpdateCards();
+  }
+
+  public ResetCursor() {
+    this._cursor = 0;
   }
 
   public async DeleteNote(id: number) {
