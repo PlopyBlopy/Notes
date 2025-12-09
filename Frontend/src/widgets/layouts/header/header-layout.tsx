@@ -6,13 +6,20 @@ import { PrimaryButtonIcon } from "@/shared/components/primary-button-icon";
 import { Modal } from "@/shared/components/modal";
 import { NoteCreate } from "@/widgets/note-create/note-create";
 import { useState } from "react";
-import { postNote, type CreateNote } from "@/shared/api";
+import { type CreateNote } from "@/shared/api";
+import { useStore } from "@/shared/hook/store";
 
 export const HeaderLayout = () => {
   const [isModalOpen, setModalOpen] = useState(false);
+  const { postNote } = useStore();
 
   const createNote = async (note: CreateNote) => {
-    await postNote(note);
+    try {
+      await postNote(note);
+      handleClose();
+    } catch (err) {
+      console.error("Ошибка при создании заметки:", err);
+    }
   };
 
   const handleOpen = () => {
