@@ -43,6 +43,7 @@ type IIndexManager interface {
 	GetFilteredTitleNoteIds(search string) ([]int, error)
 	GetFilteredTagNoteIds(tagIds ...int) ([]int, error)
 	GetFilteredThemeNoteIds(themeId int) ([]int, error)
+	GetFilteredCompletedNoteIds(completed bool) ([]int, error)
 
 	GetNoteIndex(id int) (*NoteIndex, error)
 
@@ -476,6 +477,19 @@ func (im *IndexManager) GetFilteredThemeNoteIds(themeId int) ([]int, error) {
 
 	return ids, nil
 }
+
+func (im *IndexManager) GetFilteredCompletedNoteIds(completed bool) ([]int, error) {
+	ids := []int{}
+
+	for i, _ := range im.i.NoteIndexes {
+		if !im.i.NoteIndexes[i].Deleted && im.i.NoteIndexes[i].Completed == completed {
+			ids = append(ids, im.i.NoteIndexes[i].Id)
+		}
+	}
+
+	return ids, nil
+}
+
 func (im *IndexManager) UpdateNoteCompleted(id int, completed bool) error {
 	noteIndex, err := im.GetNoteIndex(id)
 	if err != nil {

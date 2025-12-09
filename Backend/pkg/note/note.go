@@ -140,6 +140,18 @@ func (nm NoteManager) GetFilteredNoteCards(completed bool, search string, limit,
 	}
 	filter++
 
+	completedIds, err := nm.indexManager.GetFilteredCompletedNoteIds(completed)
+	if err != nil {
+
+	}
+
+	if len(completedIds) != 0 {
+		for _, i := range completedIds {
+			notes[i]++
+		}
+	}
+	filter++
+
 	res := []NoteCard{}
 
 	if filter != 0 && len(notes) != 0 {
