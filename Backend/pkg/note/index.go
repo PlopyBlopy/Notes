@@ -385,7 +385,7 @@ func (im *IndexManager) GetNotes(completed bool, cursor, limit int, noteIds ...i
 func (im *IndexManager) GetNoteIndex(id int) (*NoteIndex, error) {
 	var noteIndex *NoteIndex
 
-	for i, _ := range im.i.NoteIndexes {
+	for i := range im.i.NoteIndexes {
 		if im.i.NoteIndexes[i].Id == id {
 			noteIndex = &im.i.NoteIndexes[i]
 		}
@@ -483,7 +483,7 @@ func (im *IndexManager) GetFilteredThemeNoteIds(themeId int) ([]int, error) {
 func (im *IndexManager) GetFilteredCompletedNoteIds(completed bool) ([]int, error) {
 	ids := []int{}
 
-	for i, _ := range im.i.NoteIndexes {
+	for i := range im.i.NoteIndexes {
 		if !im.i.NoteIndexes[i].Deleted && im.i.NoteIndexes[i].Completed == completed {
 			ids = append(ids, im.i.NoteIndexes[i].Id)
 		}
@@ -541,7 +541,7 @@ func (im *IndexManager) UpdateNoteCompleted(id int, completed bool) error {
 
 func (im *IndexManager) DeleteNote(id int) error {
 	isDeleted := false
-	for i, _ := range im.i.NoteIndexes {
+	for i := range im.i.NoteIndexes {
 		if im.i.NoteIndexes[i].Id == id {
 			im.i.NoteIndexes[i].Deleted = true
 			im.removeFromTitles(id)
@@ -590,7 +590,7 @@ func (im *IndexManager) removeFromThemes(id, themeId int) error {
 		ids := []int{}
 
 		if k == 0 {
-			for i, _ := range v {
+			for i := range v {
 				if v[i] != id {
 					ids = append(ids, v[i])
 				}
@@ -600,7 +600,7 @@ func (im *IndexManager) removeFromThemes(id, themeId int) error {
 		}
 
 		if k == themeId {
-			for i, _ := range v {
+			for i := range v {
 				if v[i] != id {
 					ids = append(ids, v[i])
 				}
@@ -625,7 +625,7 @@ func (im *IndexManager) removeFromTags(id int, tagIds ...int) error {
 
 		for _, id := range tagIds {
 			if k == id {
-				for i, _ := range v {
+				for i := range v {
 					if v[i] != id {
 						ids = append(ids, v[i])
 					}
