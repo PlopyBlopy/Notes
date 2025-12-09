@@ -7,14 +7,17 @@ type Props = {
 };
 
 export const NoteList = ({ onUpdateCards }: Props) => {
-  const { cards, delNote } = useStore();
+  const { cards, updNoteCompleted, delNote } = useStore();
 
-  const handleComplete = (id: number) => {
-    console.log(`completed: ${id}`);
+  const handleComplete = async (id: number, completed: boolean) => {
+    await updNoteCompleted(id, completed);
+    await onUpdateCards();
   };
+
   const handleEdit = (id: number) => {
     console.log(`edit: ${id}`);
   };
+
   const handleDelete = async (id: number) => {
     await delNote(id);
     await onUpdateCards();
