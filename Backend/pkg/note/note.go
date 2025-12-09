@@ -183,6 +183,15 @@ func (nm NoteManager) GetFilteredNoteCards(completed bool, search string, limit,
 	return res, cursor, nil
 }
 
+func (nm NoteManager) UpdateNoteCompleted(id int, completed bool) error {
+	err := nm.indexManager.UpdateNoteCompleted(id, completed)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (nm NoteManager) DeleteNote(id int) error {
 	err := nm.indexManager.DeleteNote(id)
 	if err != nil {

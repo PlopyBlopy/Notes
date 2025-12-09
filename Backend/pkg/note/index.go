@@ -44,6 +44,10 @@ type IIndexManager interface {
 	GetFilteredTagNoteIds(tagIds ...int) ([]int, error)
 	GetFilteredThemeNoteIds(themeId int) ([]int, error)
 
+	GetNoteIndex(id int) (*NoteIndex, error)
+
+	UpdateNoteCompleted(id int, completed bool) error
+
 	DeleteNote(id int) error
 }
 
@@ -373,6 +377,22 @@ func (im *IndexManager) GetNotes(completed bool, cursor, limit int, noteIds ...i
 	return notes, cursor, nil
 }
 
+func (im *IndexManager) GetNoteIndex(id int) (*NoteIndex, error) {
+	var noteIndex *NoteIndex
+
+	for i, _ := range im.i.NoteIndexes {
+		if im.i.NoteIndexes[i].Id == id {
+			noteIndex = &im.i.NoteIndexes[i]
+		}
+	}
+
+	if noteIndex == nil {
+		return nil, fmt.Errorf("failed to find a NoteIndex with the id: %d", id)
+	}
+
+	return noteIndex, nil
+}
+
 func (im *IndexManager) GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteIndex, error) {
 	notes := make([]NoteIndex, 0, len(noteIds))
 	noteIndexes := im.i.NoteIndexes
@@ -455,6 +475,52 @@ func (im *IndexManager) GetFilteredThemeNoteIds(themeId int) ([]int, error) {
 	}
 
 	return ids, nil
+}
+func (im *IndexManager) UpdateNoteCompleted(id int, completed bool) error {
+	noteIndex, err := im.GetNoteIndex(id)
+	if err != nil {
+		return err
+	}
+
+	noteIndex.Completed = completed
+
+	var indexNotes *[]Note
+
+	if completed {
+		indexNotes = &im.i.UncompletedNotes
+	} else {
+		indexNotes = &im.i.CompletedNotes
+	}
+
+	notes := make([]Note, 0, len(*indexNotes)-1)
+
+	for _, v := range *indexNotes {
+		if v.Id != id {
+			notes = append(notes, v)
+		} else {
+			if completed {
+				im.i.CompletedNotes = append(im.i.CompletedNotes, v)
+			} else {
+				im.i.UncompletedNotes = append(im.i.UncompletedNotes, v)
+			}
+		}
+	}
+
+	*indexNotes = notes
+
+	b, err := json.Marshal(im.i.NoteIndexes)
+	if err != nil {
+
+	}
+
+	p := filepath.Join(im.metadataManager.BasePath(), im.metadataManager.IndexPath(), im.metadataManager.NoteIndexFileName())
+
+	err = os.WriteFile(p, b, 0222)
+	if err != nil {
+
+	}
+
+	return nil
 }
 
 func (im *IndexManager) DeleteNote(id int) error {
