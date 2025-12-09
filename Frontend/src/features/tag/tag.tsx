@@ -8,7 +8,6 @@ type Props = {
 
 export const Tag = ({ tag }: Props) => {
   if (!tag) {
-    console.warn("Tag component received undefined tag");
     return null;
   }
 
