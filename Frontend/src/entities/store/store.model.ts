@@ -5,6 +5,7 @@ import {
   getTagColors,
   getTags,
   getThemes,
+  patchNoteCompleted,
   type Card,
   type ColorInfo,
   type FilteredNotes,
@@ -128,6 +129,10 @@ class Store {
     this._cards = data.cards;
 
     this.notify();
+  }
+
+  public async UpdateNoteCompleted(id: number, completed: boolean) {
+    await patchNoteCompleted(id, completed);
   }
 
   public async DeleteNote(id: number) {

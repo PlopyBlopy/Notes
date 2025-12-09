@@ -55,6 +55,11 @@ export function useStore() {
         storeInstance.UpdateCards(filter, cursor);
       });
     },
+    updNoteCompleted: (id: number, completed: boolean) => {
+      store.then((storeInstance) => {
+        storeInstance.UpdateNoteCompleted(id, completed);
+      });
+    },
     delNote: (id: number) => {
       store.then((storeInstance) => {
         storeInstance.DeleteNote(id);
