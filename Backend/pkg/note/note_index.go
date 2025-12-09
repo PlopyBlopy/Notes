@@ -11,7 +11,7 @@ import (
 // нету функционала для очистки удаленных note в runtime, очистка только при старте приложения
 type NoteIndex struct {
 	Id          int       `json:"id"`
-	Completed   bool      `json:"completed"` // 0 - не выполнено, 1 - выполнено, 2 - удалена
+	Completed   bool      `json:"completed"`
 	Deleted     bool      `json:"deleted"`
 	ThemeId     int       `json:"theme_id"` // есть всегда, default = без темы
 	TagIds      []int     `json:"tag_ids"`
