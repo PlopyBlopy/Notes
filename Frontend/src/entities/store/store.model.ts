@@ -145,7 +145,7 @@ class Store {
     const data: FilteredNotes = await getNotes(this._filter, this._cursor);
 
     if (this._cursor === 0) {
-    this._cards = data.cards;
+      this._cards = data.cards;
     } else {
       this._cards = this._cards.concat(data.cards);
     }
@@ -156,7 +156,7 @@ class Store {
 
   public async UpdateNoteCompleted(id: number, completed: boolean) {
     await patchNoteCompleted(id, completed);
-await this.UpdateCards();
+    await this.UpdateCards();
   }
 
   public UpdateFilter(partialFilter: Partial<NotesFilter>) {
@@ -175,6 +175,11 @@ await this.UpdateCards();
 
   public async DeleteNote(id: number) {
     await deleteNote(id);
+
+    this._cards = this._cards.filter((card) => card.note.id !== id);
+    this._cursor = this._cursor - 1;
+
+    this.notify();
   }
 }
 
