@@ -38,7 +38,7 @@ type IIndexManager interface {
 
 	GetNote(completed bool, noteId int) (Note, error)
 	GetNotes(completed bool, cursor, limit int, noteIds ...int) ([]Note, int, error)
-	GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteIndex, error)
+	GetNoteIndexesFilteredNoteIds(notes ...Note) ([]*NoteIndex, error)
 
 	GetFilteredTitleNoteIds(search string) ([]int, error)
 	GetFilteredTagNoteIds(tagIds ...int) ([]int, error)
@@ -345,7 +345,11 @@ func (im *IndexManager) GetNote(completed bool, noteId int) (Note, error) {
 func (im *IndexManager) GetNotes(completed bool, cursor, limit int, noteIds ...int) ([]Note, int, error) {
 	cap := limit
 	if len(noteIds) < limit {
-		cap = len(noteIds)
+		cap = len(noteIds) - cursor
+	}
+
+	if cap < 0 {
+		return nil, cursor, fmt.Errorf("cap exit of range")
 	}
 
 	notes := make([]Note, 0, cap)
@@ -361,7 +365,7 @@ func (im *IndexManager) GetNotes(completed bool, cursor, limit int, noteIds ...i
 		return nil, cursor, fmt.Errorf("cursor exit of range")
 	}
 
-	noteIdIndex := 0
+	noteIdIndex := cursor
 
 	for i := cursor; i < len(indexNotes); i++ {
 		if len(notes) == cap {
@@ -394,20 +398,18 @@ func (im *IndexManager) GetNoteIndex(id int) (*NoteIndex, error) {
 	return noteIndex, nil
 }
 
-func (im *IndexManager) GetNoteIndexesFilteredNoteIds(noteIds ...int) ([]NoteIndex, error) {
-	notes := make([]NoteIndex, 0, len(noteIds))
-	noteIndexes := im.i.NoteIndexes
+func (im *IndexManager) GetNoteIndexesFilteredNoteIds(notes ...Note) ([]*NoteIndex, error) {
+	res := make([]*NoteIndex, 0, len(notes))
+	j := 0
 
-	for _, n := range noteIndexes {
-		for _, id := range noteIds {
-			if n.Id == id {
-				notes = append(notes, n)
-				break
-			}
+	for i := 0; i < len(im.i.NoteIndexes) && j < len(notes); i++ {
+		if im.i.NoteIndexes[i].Id == notes[j].Id {
+			res = append(res, &im.i.NoteIndexes[i])
+			j++
 		}
 	}
 
-	return notes, nil
+	return res, nil
 }
 
 func (im *IndexManager) GetFilteredTitleNoteIds(search string) ([]int, error) {

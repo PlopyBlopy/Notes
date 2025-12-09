@@ -172,7 +172,7 @@ func (nm NoteManager) GetFilteredNoteCards(completed bool, search string, limit,
 
 		cursor = c
 
-		noteIndexes, err := nm.indexManager.GetNoteIndexesFilteredNoteIds(noteIds...)
+		noteIndexes, err := nm.indexManager.GetNoteIndexesFilteredNoteIds(filteredNotes...)
 		if err != nil {
 
 		}
