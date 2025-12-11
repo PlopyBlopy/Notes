@@ -15,7 +15,7 @@ interface Style {
 interface PropNoteContainer extends Style {
   card: Card;
   onComplete: (id: number, completed: boolean) => void;
-  onEdit: (id: number) => void;
+  onEdit: (card: Card) => void;
   onDelete: (id: number) => void;
 }
 
@@ -101,7 +101,7 @@ export const NoteCard = ({ card, onComplete, onEdit, onDelete }: PropNoteContain
         <div className={styles.footerLeft}>
           <ButtonIcon
             onClick={() => {
-              onEdit(card.note.id);
+              onEdit(card);
             }}
             IconComponent={Icons.elements.edit}
             label="edit"
