@@ -20,7 +20,6 @@ type Theme struct {
 	Title string
 }
 
-// срезы для цветов тега и карточек заметок
 type Color struct {
 	Id       int
 	Name     string

@@ -3,7 +3,6 @@ package note
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -47,6 +46,7 @@ type IIndexManager interface {
 
 	GetNoteIndex(id int) (*NoteIndex, error)
 
+	UpdateNote(id int) error
 	UpdateNoteCompleted(id int, completed bool) error
 
 	DeleteNote(id int) error
@@ -135,9 +135,9 @@ func (im *IndexManager) clearRemovedNotes() error {
 	noteIndexes := []NoteIndex{}
 	deletedCount := 0
 
-	for _, v := range im.i.NoteIndexes {
-		if !v.Deleted {
-			noteIndexes = append(noteIndexes, v)
+	for i := range im.i.NoteIndexes {
+		if !im.i.NoteIndexes[i].Deleted {
+			noteIndexes = append(noteIndexes, im.i.NoteIndexes[i])
 		} else {
 			deletedCount++
 		}
@@ -170,7 +170,7 @@ func (im *IndexManager) clearRemovedNotes() error {
 	json.Unmarshal(b, &n)
 
 	notes := []Note{}
-	for i := 0; i < len(im.i.NoteIndexes); i++ {
+	for i := range im.i.NoteIndexes {
 		if n[i].Id == im.i.NoteIndexes[i].Id {
 			notes = append(notes, n[i])
 		}
@@ -196,9 +196,8 @@ func (im *IndexManager) scanNote() error {
 	json.Unmarshal(b, &n)
 
 	for i := 0; i < len(n); i++ {
-
 		if im.i.NoteIndexes[i].Id != n[i].Id {
-			return errors.New("failed scanNote: NoteIndexes.Id not equal note.Id")
+			return fmt.Errorf("failed scanNote: NoteIndexes.Id: %d, not equal note.Id: %d", im.i.NoteIndexes[i].Id, n[i].Id)
 		}
 
 		if im.i.NoteIndexes[i].Completed {
@@ -246,6 +245,7 @@ func (im *IndexManager) scanNoteTitle() error {
 
 	return nil
 }
+
 func (im *IndexManager) scanNoteTheme() error {
 	themeIds, err := im.metadataManager.GetThemeIds()
 	if err != nil {
@@ -269,6 +269,7 @@ func (im *IndexManager) scanNoteTheme() error {
 
 	return nil
 }
+
 func (im *IndexManager) scanNoteTag() error {
 	TagsIds, err := im.metadataManager.GetTagIds()
 	if err != nil {
