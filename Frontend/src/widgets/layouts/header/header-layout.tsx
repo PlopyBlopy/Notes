@@ -1,26 +1,18 @@
-import { ThemeToggle } from "@/widgets/theme-toggle";
-import styles from "./header-layout.module.css";
-import { Icon } from "@/shared/components/icon";
+import type { CreateNote } from "@/shared/api";
 import { Icons } from "@/shared/assets/icons";
-import { PrimaryButtonIcon } from "@/shared/components/primary-button-icon";
+import { Icon } from "@/shared/components/icon";
 import { Modal } from "@/shared/components/modal";
-import { NoteCreate } from "@/widgets/note-create/note-create";
-import { useState } from "react";
-import { type CreateNote } from "@/shared/api";
+import { PrimaryButtonIcon } from "@/shared/components/primary-button-icon";
 import { useStore } from "@/shared/hook/store";
+import type { NoteForm } from "@/widgets/note-create";
+import { NoteFormModal } from "@/widgets/note-create/note-form-modal";
+import { ThemeToggle } from "@/widgets/theme-toggle";
+import { useState } from "react";
+import styles from "./header-layout.module.css";
 
 export const HeaderLayout = () => {
   const [isModalOpen, setModalOpen] = useState(false);
   const { postNote } = useStore();
-
-  const createNote = async (note: CreateNote) => {
-    try {
-      await postNote(note);
-      handleClose();
-    } catch (err) {
-      console.error("Ошибка при создании заметки:", err);
-    }
-  };
 
   const handleOpen = () => {
     setModalOpen(true);
@@ -28,14 +20,25 @@ export const HeaderLayout = () => {
   const handleClose = () => {
     setModalOpen(false);
   };
+
+  const handlePostNote = async (form: NoteForm) => {
+    handleClose();
+
+    const note: CreateNote = {
+      ...form,
+    };
+
+    await postNote(note);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.items}>
         <Icon IconComponent={Icons.elements.note} />
-        <PrimaryButtonIcon onClick={handleOpen} text="Новая заметка" IconComponent={Icons.elements.plus} />
+        <PrimaryButtonIcon onClick={handleOpen} text={"Добавить заметку"} IconComponent={Icons.elements.plus} />
         <ThemeToggle />
         <Modal isOpen={isModalOpen} onClose={handleClose}>
-          <NoteCreate onClose={handleClose} onSubmit={createNote} />
+          <NoteFormModal label={"Новая заметка"} submitLabel="Создать" onClose={handleClose} onSubmit={(val) => handlePostNote(val)} />
         </Modal>
       </div>
     </div>
