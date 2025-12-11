@@ -24,6 +24,7 @@ import (
 	addnote "github.com/PlopyBlopy/notebot/internal/note/add_note"
 	deletenote "github.com/PlopyBlopy/notebot/internal/note/delete_note"
 	getfilterednotecards "github.com/PlopyBlopy/notebot/internal/note/get_filtered_note_cards"
+	updatenote "github.com/PlopyBlopy/notebot/internal/note/update_note"
 	updateNoteCompleted "github.com/PlopyBlopy/notebot/internal/note/update_note_completed"
 	"github.com/PlopyBlopy/notebot/pkg/httpserver"
 	"github.com/PlopyBlopy/notebot/pkg/logger"
@@ -97,6 +98,7 @@ func App(ctx context.Context, c config.Config) error {
 	gettagcolorUcecase := gettagcolor.NewUsecase(metadataService)
 	getthemesUcecase := getthemes.NewUsecase(metadataService)
 
+	updatenoteUsecase := updatenote.NewUsecase(noteService)
 	updateNoteCompletedUsecase := updateNoteCompleted.NewUsecase(noteManager)
 
 	deletenoteUcecase := deletenote.NewUsecase(noteService)
@@ -114,7 +116,8 @@ func App(ctx context.Context, c config.Config) error {
 	gettagcolorHandler := gettagcolor.NewHttpHandler(gettagcolorUcecase)
 	getthemesHandler := getthemes.NewHttpHandler(getthemesUcecase)
 
-	updateNoteCompletedHandler := updateNoteCompleted.NewHttpHandler(updateNoteCompletedUsecase)
+	updatenoteHandler := updatenote.NewHttpHandler(updatenoteUsecase)
+	updatenotecompletedHandler := updateNoteCompleted.NewHttpHandler(updateNoteCompletedUsecase)
 
 	deletenoteHandler := deletenote.NewHttpHandler(deletenoteUcecase)
 
@@ -133,7 +136,8 @@ func App(ctx context.Context, c config.Config) error {
 	sm.AddHandler("GET /note/tag/color", gettagcolorHandler)
 	sm.AddHandler("GET /note/theme", getthemesHandler)
 
-	sm.AddHandler("PATCH /note", updateNoteCompletedHandler)
+	sm.AddHandler("PUT /note", updatenoteHandler)
+	sm.AddHandler("PATCH /note", updatenotecompletedHandler)
 
 	sm.AddHandler("DELETE /note", deletenoteHandler)
 
