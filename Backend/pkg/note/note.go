@@ -195,6 +195,33 @@ func (nm NoteManager) GetFilteredNoteCards(completed bool, search string, limit,
 	return res, cursor, nil
 }
 
+func (nm NoteManager) UpdateNote(note UpdateNote) error {
+	err := nm.indexManager.UpdateNote(note.Id)
+	if err != nil {
+		return err
+	}
+
+	err = nm.indexManager.DeleteNote(note.Id)
+	if err != nil {
+		return err
+	}
+
+	createNote := &CreateNote{
+		Title:       note.Title,
+		Description: note.Description,
+		ThemeId:     note.ThemeId,
+		TagIds:      note.TagIds,
+		NoteColorId: note.NoteColorId,
+	}
+
+	err = nm.AddNote(*createNote)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (nm NoteManager) UpdateNoteCompleted(id int, completed bool) error {
 	err := nm.indexManager.UpdateNoteCompleted(id, completed)
 	if err != nil {

@@ -492,6 +492,23 @@ func (im *IndexManager) GetFilteredCompletedNoteIds(completed bool) ([]int, erro
 	return ids, nil
 }
 
+func (im *IndexManager) UpdateNote(id int) error {
+	var noteIndex *NoteIndex
+
+	for i := range im.i.NoteIndexes {
+		if im.i.NoteIndexes[i].Id == id {
+			noteIndex = &im.i.NoteIndexes[i]
+			break
+		}
+	}
+
+	if noteIndex == nil {
+		return fmt.Errorf("failed find note index")
+	}
+
+	return nil
+}
+
 func (im *IndexManager) UpdateNoteCompleted(id int, completed bool) error {
 	noteIndex, err := im.GetNoteIndex(id)
 	if err != nil {

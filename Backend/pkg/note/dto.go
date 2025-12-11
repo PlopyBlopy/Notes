@@ -43,3 +43,12 @@ type CreateNote struct {
 	TagIds      []int
 	NoteColorId int
 }
+
+type UpdateNote struct {
+	Id          int
+	Title       string
+	Description string
+	ThemeId     int
+	TagIds      []int
+	NoteColorId int
+}
