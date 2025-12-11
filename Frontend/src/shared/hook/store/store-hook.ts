@@ -1,5 +1,5 @@
 import { store } from "@/entities/store";
-import { type Card, type ColorInfo, type CreateNote, type NotesFilter, type TagInfo, type ThemeInfo } from "@/shared/api";
+import { type Card, type ColorInfo, type CreateNote, type NotesFilter, type TagInfo, type ThemeInfo, type UpdateNote } from "@/shared/api";
 import { useEffect, useState } from "react";
 
 export function useStore() {
@@ -62,6 +62,11 @@ export function useStore() {
     updCards: () => {
       store.then((storeInstance) => {
         storeInstance.UpdateCards();
+      });
+    },
+    updNote: (note: UpdateNote) => {
+      store.then((storeInstance) => {
+        storeInstance.UpdateNote(note);
       });
     },
     updNoteCompleted: (id: number, completed: boolean) => {

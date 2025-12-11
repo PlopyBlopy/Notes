@@ -1,4 +1,4 @@
-import type { ColorInfo, CreateNote, NotesFilter, TagInfo, ThemeInfo, FilteredNotes } from "./api.model";
+import type { ColorInfo, CreateNote, NotesFilter, TagInfo, ThemeInfo, FilteredNotes, UpdateNote } from "./api.model";
 
 const apiurl = "http://localhost:8080/api/v1";
 
@@ -65,6 +65,20 @@ export const getCardColors = async (): Promise<ColorInfo[]> => {
 };
 
 // export const patchNote = async (note: UpdateNote) => {};
+
+export const putNote = async (note: UpdateNote) => {
+  const response = await fetch(`${apiurl}/note`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(note),
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+};
 
 export const patchNoteCompleted = async (id: number, completed: boolean) => {
   const params = new URLSearchParams({

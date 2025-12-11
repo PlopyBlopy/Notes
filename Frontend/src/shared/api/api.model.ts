@@ -30,8 +30,8 @@ export type UpdateNote = {
   id: number;
   title: string;
   description: string;
-  theme: string;
-  tags: string[];
+  themeId: number;
+  tagIds: number[];
   noteColorId: number;
 };
 

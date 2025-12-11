@@ -7,6 +7,7 @@ import {
   getThemes,
   patchNoteCompleted,
   postNote,
+  putNote,
   type Card,
   type ColorInfo,
   type CreateNote,
@@ -14,6 +15,7 @@ import {
   type NotesFilter,
   type TagInfo,
   type ThemeInfo,
+  type UpdateNote,
 } from "@/shared/api";
 
 class Store {
@@ -44,7 +46,8 @@ class Store {
 
   static async Init(): Promise<Store> {
     const store = new Store();
-    await Promise.all([store.initCards(), store.initTags(), store.initTagColors(), store.initCardColors(), store.initThemes()]);
+    await Promise.all([store.initTags(), store.initTagColors(), store.initCardColors(), store.initThemes()]);
+    store.initCards();
     store.notify();
     return store;
   }
@@ -152,6 +155,13 @@ class Store {
     this._cursor = data.cursor;
 
     this.notify();
+  }
+
+  public async UpdateNote(note: UpdateNote) {
+    await putNote(note);
+
+    this.ResetCursor();
+    this.UpdateCards();
   }
 
   public async UpdateNoteCompleted(id: number, completed: boolean) {
