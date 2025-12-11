@@ -1,2 +1,2 @@
-export * from "./note-create.module.css";
-export * from "./note-create.model";
+export * from "./note-form-modal.module.css";
+export * from "./note-form-modal.model";

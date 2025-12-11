@@ -1,29 +1,30 @@
 import { useState } from "react";
-import styles from "./note-create.module.css";
-import type { NoteForm } from "./note-create.model";
+import styles from "./note-form-modal.module.css";
+import type { NoteForm } from "./note-form-modal.model";
 import { ButtonIcon } from "@/shared/components/button-icon";
 import { Icons } from "@/shared/assets/icons";
 import { PrimaryButtonSubmit } from "@/shared/components/primary-button-submit";
 import { ColorPicker } from "@/features/color-picker";
-import { type CreateNote } from "@/shared/api";
 import { DropdownTheme } from "@/features/dropdown-theme";
 import { TagsSelect } from "../tag-select";
 import { useStore } from "@/shared/hook/store";
 
 type Props = {
+  label: string;
+  submitLabel: string;
   onClose: () => void;
-  onSubmit: (note: CreateNote) => void;
+  onSubmit: (form: NoteForm) => void;
+  initForm?: NoteForm;
 };
 
-export const NoteCreate = ({ onClose, onSubmit }: Props) => {
-  // TODO: MobX или Singleton для themes, tags
-
+export const NoteFormModal = ({ label, submitLabel, onClose, onSubmit, initForm }: Props) => {
   const [form, setForm] = useState<NoteForm>({
     title: "",
     description: "",
     themeId: 0,
-    tagsId: [],
+    tagIds: [],
     noteColorId: 0,
+    ...initForm,
   });
 
   const { themeArr, cardColorArr } = useStore();
@@ -36,20 +37,15 @@ export const NoteCreate = ({ onClose, onSubmit }: Props) => {
   const handleSubmitForm = (e: React.FormEvent) => {
     e.preventDefault();
 
-    const note: CreateNote = {
-      title: form.title,
-      description: form.description,
-      themeId: form.themeId,
-      tagIds: form.tagsId,
-      noteColorId: form.noteColorId,
-    };
-    onSubmit(note);
+    setForm((prev) => ({ ...prev, tagIds: prev.tagIds.sort() }));
+
+    onSubmit(form);
   };
 
   return (
     <div>
       <div className={styles.header}>
-        Создать новую заметку
+        {label}
         <ButtonIcon onClick={onClose} IconComponent={Icons.elements.close} label={"close"} variant={"danger"} />
       </div>
       <form className={styles.middle} onSubmit={handleSubmitForm}>
@@ -73,7 +69,7 @@ export const NoteCreate = ({ onClose, onSubmit }: Props) => {
           <textarea
             id="description"
             name="description"
-            required={true}
+            required={false}
             value={form.description}
             onChange={handleChange}
             placeholder="Описание..."
@@ -92,7 +88,7 @@ export const NoteCreate = ({ onClose, onSubmit }: Props) => {
         </div>
         <div>
           <label>Теги</label>
-          <TagsSelect value={form.tagsId} onChange={(tags) => setForm((prev) => ({ ...prev, tagsId: tags }))} />
+          <TagsSelect value={form.tagIds} onChange={(tags) => setForm((prev) => ({ ...prev, tagIds: tags }))} />
         </div>
         <div>
           <ColorPicker
@@ -104,7 +100,7 @@ export const NoteCreate = ({ onClose, onSubmit }: Props) => {
         </div>
 
         <div className={styles.footer}>
-          <PrimaryButtonSubmit text="Создать" />
+          <PrimaryButtonSubmit text={submitLabel} />
         </div>
       </form>
     </div>
