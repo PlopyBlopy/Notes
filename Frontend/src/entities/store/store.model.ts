@@ -156,7 +156,11 @@ class Store {
 
   public async UpdateNoteCompleted(id: number, completed: boolean) {
     await patchNoteCompleted(id, completed);
-    await this.UpdateCards();
+
+    this._cards = this._cards.filter((card) => card.note.id !== id);
+    this._cursor = this._cursor - 1;
+
+    this.notify();
   }
 
   public UpdateFilter(partialFilter: Partial<NotesFilter>) {
